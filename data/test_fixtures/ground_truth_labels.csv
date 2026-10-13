@@ -1,0 +1,141 @@
+row_id,column,error_type,original_value,injected_value
+790,years_experience,univariate_outlier,2.3,85.0
+858,age,univariate_outlier,50,130
+309,salary,univariate_outlier,66700.0,2200000.0
+705,credit_score,univariate_outlier,724,1200
+138,credit_score,univariate_outlier,750,1500
+469,salary,univariate_outlier,211500.0,2200000.0
+1422,salary,univariate_outlier,200000.0,1500000.0
+474,age,univariate_outlier,49,145
+463,credit_score,univariate_outlier,717,1200
+1167,credit_score,univariate_outlier,804,1200
+548,salary,univariate_outlier,96000.0,3500000.0
+144,credit_score,univariate_outlier,722,1500
+116,salary,univariate_outlier,57500.0,1500000.0
+784,age,univariate_outlier,42,145
+682,credit_score,univariate_outlier,726,1200
+20,salary,univariate_outlier,90700.0,3500000.0
+829,salary,univariate_outlier,54300.0,1500000.0
+683,age,univariate_outlier,63,145
+745,years_experience,univariate_outlier,12.8,92.0
+1114,credit_score,univariate_outlier,732,1200
+337,credit_score,univariate_outlier,781,1500
+237,salary,univariate_outlier,147100.0,3500000.0
+859,salary,univariate_outlier,62300.0,2200000.0
+1460,credit_score,univariate_outlier,774,1200
+45,age,univariate_outlier,63,145
+692,credit_score,univariate_outlier,795,1200
+82,years_experience,univariate_outlier,1.3,85.0
+1299,salary,univariate_outlier,74600.0,3500000.0
+700,credit_score,univariate_outlier,760,1500
+1106,salary,univariate_outlier,103900.0,1500000.0
+751,salary,multivariate_outlier,"(np.float64(2.5), np.float64(74000.0))","(0.5, 245000.0)"
+899,salary,multivariate_outlier,"(np.float64(4.9), np.float64(89300.0))","(0.5, 245000.0)"
+489,salary,multivariate_outlier,"(np.float64(9.6), np.float64(107000.0))","(0.5, 245000.0)"
+1026,years_experience,multivariate_outlier,"(np.int64(25), np.float64(3.2))","(22, 26.0)"
+51,salary,multivariate_outlier,"(np.float64(4.1), np.float64(104400.0))","(0.5, 245000.0)"
+129,years_experience,multivariate_outlier,"(np.int64(49), np.float64(10.6))","(22, 26.0)"
+1463,salary,multivariate_outlier,"(np.int64(24), np.float64(1.9), np.float64(66300.0))","(64, 0.5, 210000.0)"
+1350,salary,multivariate_outlier,"(np.int64(24), np.float64(1.9), np.float64(60900.0))","(64, 0.5, 210000.0)"
+86,salary,multivariate_outlier,"(np.float64(2.5), np.float64(102000.0))","(0.5, 245000.0)"
+380,years_experience,multivariate_outlier,"(np.int64(22), np.float64(0.6))","(22, 26.0)"
+187,salary,multivariate_outlier,"(np.int64(38), np.float64(9.2), np.float64(124300.0))","(64, 0.5, 210000.0)"
+192,years_experience,multivariate_outlier,"(np.int64(48), np.float64(8.5))","(22, 26.0)"
+985,salary,multivariate_outlier,"(np.int64(50), np.float64(8.3), np.float64(124100.0))","(64, 0.5, 210000.0)"
+356,years_experience,multivariate_outlier,"(np.int64(28), np.float64(2.7))","(22, 26.0)"
+639,salary,multivariate_outlier,"(np.float64(24.1), np.float64(255600.0))","(0.5, 245000.0)"
+1,years_experience,multivariate_outlier,"(np.int64(55), np.float64(9.0))","(22, 26.0)"
+1143,years_experience,multivariate_outlier,"(np.int64(58), np.float64(27.4))","(22, 26.0)"
+1003,salary,multivariate_outlier,"(np.int64(60), np.float64(18.6), np.float64(182300.0))","(64, 0.5, 210000.0)"
+1092,salary,multivariate_outlier,"(np.int64(58), np.float64(12.0), np.float64(175600.0))","(64, 0.5, 210000.0)"
+1450,years_experience,multivariate_outlier,"(np.int64(34), np.float64(9.0))","(22, 26.0)"
+175,salary,multivariate_outlier,"(np.int64(41), np.float64(15.9), np.float64(164900.0))","(64, 0.5, 210000.0)"
+1465,years_experience,multivariate_outlier,"(np.int64(26), np.float64(3.5))","(22, 26.0)"
+1401,years_experience,multivariate_outlier,"(np.int64(32), np.float64(4.9))","(22, 26.0)"
+1222,years_experience,multivariate_outlier,"(np.int64(63), np.float64(17.5))","(22, 26.0)"
+67,salary,multivariate_outlier,"(np.float64(12.4), np.float64(159400.0))","(0.5, 245000.0)"
+1285,years_experience,multivariate_outlier,"(np.int64(24), np.float64(1.7))","(22, 26.0)"
+26,salary,multivariate_outlier,"(np.float64(2.2), np.float64(102300.0))","(0.5, 245000.0)"
+472,years_experience,multivariate_outlier,"(np.int64(40), np.float64(13.0))","(22, 26.0)"
+868,years_experience,multivariate_outlier,"(np.int64(41), np.float64(3.1))","(22, 26.0)"
+1456,salary,multivariate_outlier,"(np.float64(4.2), np.float64(99400.0))","(0.5, 245000.0)"
+1152,job_level,invalid_category,Senior,Staff_Engineer
+80,education,invalid_category,Bachelor,PHD_Special
+140,job_level,invalid_category,Senior,Staff_Engineer
+134,job_level,invalid_category,Senior,Staff_Engineer
+897,job_level,invalid_category,Entry,Staff_Engineer
+1391,education,invalid_category,Bachelor,HighSchoolGrad
+263,department,invalid_category,Operations,Engneering
+435,job_level,invalid_category,Mid,Staff_Engineer
+222,job_level,invalid_category,Lead,Intern_Lead
+1411,education,invalid_category,Bachelor,PHD_Special
+591,job_level,invalid_category,Senior,Intern_Lead
+988,department,invalid_category,Sales,Marketing123
+722,job_level,invalid_category,Senior,Staff_Engineer
+1237,department,invalid_category,Marketing,Sales_Dept
+1095,department,invalid_category,Marketing,Sales_Dept
+1000,education,invalid_category,Master,PHD_Special
+662,department,invalid_category,Sales,Marketing123
+1183,department,invalid_category,Sales,Engneering
+1275,department,invalid_category,Finance,Engneering
+1277,education,invalid_category,PhD,MasterOfArts
+483,credit_score,range_violation,673,150
+125,age,range_violation,46,-5
+673,performance_score,range_violation,2.79,-1.5
+143,credit_score,range_violation,700,950
+1253,age,range_violation,56,-15
+248,age,range_violation,55,-15
+180,credit_score,range_violation,727,150
+693,credit_score,range_violation,679,950
+866,performance_score,range_violation,4.23,12.0
+728,credit_score,range_violation,732,150
+1062,age,range_violation,28,-5
+993,performance_score,range_violation,2.18,12.0
+651,credit_score,range_violation,680,950
+580,age,range_violation,26,-15
+146,credit_score,range_violation,590,150
+1107,performance_score,range_violation,3.52,12.0
+1084,credit_score,range_violation,742,1100
+365,performance_score,range_violation,3.64,8.5
+647,performance_score,range_violation,4.43,12.0
+378,age,range_violation,38,-5
+1445,salary,missing_value,62700.0,nan
+636,department,missing_value,Engineering,nan
+742,age,missing_value,49,nan
+1271,age,missing_value,26.0,nan
+581,salary,missing_value,266500.0,nan
+1467,age,missing_value,38.0,nan
+501,salary,missing_value,101700.0,nan
+48,years_experience,missing_value,15.3,nan
+1185,salary,missing_value,184500.0,nan
+537,salary,missing_value,72500.0,nan
+1435,salary,missing_value,94300.0,nan
+1482,salary,missing_value,92000.0,nan
+28,age,missing_value,45.0,nan
+643,salary,missing_value,107600.0,nan
+1050,years_experience,missing_value,15.3,nan
+923,department,missing_value,Finance,nan
+612,age,missing_value,55.0,nan
+1165,age,missing_value,26.0,nan
+283,salary,missing_value,148800.0,nan
+761,age,missing_value,45.0,nan
+171,department,missing_value,Finance,nan
+1179,salary,missing_value,55700.0,nan
+602,years_experience,missing_value,17.8,nan
+214,age,missing_value,53.0,nan
+354,years_experience,missing_value,25.5,nan
+1500,[ROW],duplicate_row,Original Row 493,Duplicate of 493
+1501,[ROW],duplicate_row,Original Row 844,Duplicate of 844
+1502,[ROW],duplicate_row,Original Row 1352,Duplicate of 1352
+1503,[ROW],duplicate_row,Original Row 760,Duplicate of 760
+1504,[ROW],duplicate_row,Original Row 795,Duplicate of 795
+1505,[ROW],duplicate_row,Original Row 850,Duplicate of 850
+1506,[ROW],duplicate_row,Original Row 689,Duplicate of 689
+1507,[ROW],duplicate_row,Original Row 1468,Duplicate of 1468
+1508,[ROW],duplicate_row,Original Row 1211,Duplicate of 1211
+1509,[ROW],duplicate_row,Original Row 910,Duplicate of 910
+1510,[ROW],duplicate_row,Original Row 632,Duplicate of 632
+1511,[ROW],duplicate_row,Original Row 1428,Duplicate of 1428
+1512,[ROW],duplicate_row,Original Row 322,Duplicate of 322
+1513,[ROW],duplicate_row,Original Row 430,Duplicate of 430
+1514,[ROW],duplicate_row,Original Row 903,Duplicate of 903
