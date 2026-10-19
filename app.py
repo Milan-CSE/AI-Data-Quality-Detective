@@ -242,6 +242,13 @@ with tab_profile:
     st.markdown("---")
     st.markdown("### Column-Level Statistical Summary")
 
+    def _fmt(val):
+        if val is None or val == "-":
+            return "-"
+        if isinstance(val, (int, float)):
+            return f"{val:,.2f}" if not pd.isna(val) else "-"
+        return str(val)
+
     col_data = []
     for col_name, c_prof in profile["columns"].items():
         row_dict = {
@@ -252,11 +259,11 @@ with tab_profile:
             "Missing %": f"{c_prof['missing_pct']}%",
             "Unique Count": c_prof["unique_count"],
             "Unique %": f"{c_prof['unique_pct']}%",
-            "Min": c_prof.get("min", "-"),
-            "Median": c_prof.get("median", "-"),
-            "Max": c_prof.get("max", "-"),
-            "Std": c_prof.get("std", "-"),
-            "IQR": c_prof.get("iqr", "-"),
+            "Min": _fmt(c_prof.get("min")),
+            "Median": _fmt(c_prof.get("median")),
+            "Max": _fmt(c_prof.get("max")),
+            "Std": _fmt(c_prof.get("std")),
+            "IQR": _fmt(c_prof.get("iqr")),
         }
         col_data.append(row_dict)
 

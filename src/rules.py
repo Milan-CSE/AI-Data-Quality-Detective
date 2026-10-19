@@ -222,7 +222,10 @@ class DuplicateRowRule(ValidationRule):
         if df.empty:
             return findings
 
-        dup_mask = df.duplicated(subset=self.subset, keep="first")
+        try:
+            dup_mask = df.duplicated(subset=self.subset, keep="first")
+        except TypeError:
+            dup_mask = df.astype(str).duplicated(subset=self.subset, keep="first")
         for idx in df[dup_mask].index:
             col_spec = f"subset {self.subset}" if self.subset else "all columns"
             findings.append(

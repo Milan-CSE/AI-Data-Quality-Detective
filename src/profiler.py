@@ -35,7 +35,7 @@ class DataProfiler:
             raise TypeError(f"Expected pandas DataFrame, got {type(df).__name__}")
 
         if df.empty:
-            return self._empty_profile()
+            return self._empty_profile(n_cols=len(df.columns))
 
         n_rows, n_cols = df.shape
         n_cells = n_rows * n_cols
@@ -43,8 +43,12 @@ class DataProfiler:
         missing_pct = round((total_missing / n_cells) * 100, 2) if n_cells > 0 else 0.0
 
         # Duplicate calculation
-        dup_mask = df.duplicated()
-        duplicate_count = int(dup_mask.sum())
+        try:
+            dup_mask = df.duplicated()
+            duplicate_count = int(dup_mask.sum())
+        except TypeError:
+            dup_mask = df.astype(str).duplicated()
+            duplicate_count = int(dup_mask.sum())
         duplicate_pct = round((duplicate_count / n_rows) * 100, 2) if n_rows > 0 else 0.0
 
         # Memory usage
@@ -141,14 +145,19 @@ class DataProfiler:
         missing_count = int(series.isna().sum())
         missing_pct = round((missing_count / total_rows) * 100, 2) if total_rows > 0 else 0.0
         non_null_series = series.dropna()
-        unique_count = int(non_null_series.nunique())
+        try:
+            unique_count = int(non_null_series.nunique())
+        except TypeError:
+            unique_count = int(non_null_series.astype(str).nunique())
         unique_pct = (
             round((unique_count / total_rows) * 100, 2) if total_rows > 0 else 0.0
         )
 
         pandas_dtype = str(series.dtype)
-        is_numeric = pd.api.types.is_numeric_dtype(series) and not pd.api.types.is_bool_dtype(
-            series
+        is_numeric = (
+            pd.api.types.is_numeric_dtype(series)
+            and not pd.api.types.is_bool_dtype(series)
+            and not pd.api.types.is_complex_dtype(series)
         )
         is_bool = pd.api.types.is_bool_dtype(series)
         is_datetime = pd.api.types.is_datetime64_any_dtype(series)
@@ -232,7 +241,10 @@ class DataProfiler:
                 )
         else:
             # Categorical frequency stats
-            top_vals = non_null_series.value_counts().head(5)
+            try:
+                top_vals = non_null_series.value_counts().head(5)
+            except TypeError:
+                top_vals = non_null_series.astype(str).value_counts().head(5)
             profile["top_values"] = [
                 {
                     "value": str(k),
@@ -286,12 +298,12 @@ class DataProfiler:
         )
         return round(float(np.clip(health, 0.0, 100.0)), 1)
 
-    def _empty_profile(self) -> Dict[str, Any]:
+    def _empty_profile(self, n_cols: int = 0) -> Dict[str, Any]:
         """Return a structured empty profile when DataFrame has no records."""
         return {
             "overview": {
                 "total_rows": 0,
-                "total_columns": 0,
+                "total_columns": n_cols,
                 "total_cells": 0,
                 "total_missing_cells": 0,
                 "missing_cells_pct": 0.0,

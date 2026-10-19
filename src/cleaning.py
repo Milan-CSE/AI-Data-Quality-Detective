@@ -69,6 +69,11 @@ class SafeCleaner:
         """List of all applied transformations."""
         return list(self._audit_log)
 
+    @property
+    def audit_log(self) -> List[AuditStep]:
+        """Alias for audit_trail."""
+        return self.audit_trail
+
     def preview_drop_rows(self, row_ids: List[int]) -> Tuple[pd.DataFrame, List[DiffRecord]]:
         """Preview the effect of dropping specific row IDs without modifying state."""
         valid_ids = [r for r in row_ids if r in self._current_data.index]
@@ -104,7 +109,10 @@ class SafeCleaner:
         self, subset: Optional[List[str]] = None, keep: str = "first"
     ) -> Tuple[pd.DataFrame, List[DiffRecord]]:
         """Preview duplicate row removal."""
-        dup_mask = self._current_data.duplicated(subset=subset, keep=keep)
+        try:
+            dup_mask = self._current_data.duplicated(subset=subset, keep=keep)
+        except TypeError:
+            dup_mask = self._current_data.astype(str).duplicated(subset=subset, keep=keep)
         # Use boolean indexing to avoid deleting all copies when index has duplicate labels
         new_df = self._current_data[~dup_mask].copy()
 

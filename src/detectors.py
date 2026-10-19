@@ -56,13 +56,20 @@ class IQRDetector:
 
         if columns is not None:
             self.numeric_columns = [
-                c for c in columns if c in df.columns and pd.api.types.is_numeric_dtype(df[c])
+                c
+                for c in columns
+                if c in df.columns
+                and pd.api.types.is_numeric_dtype(df[c])
+                and not pd.api.types.is_bool_dtype(df[c])
+                and not pd.api.types.is_complex_dtype(df[c])
             ]
         else:
             self.numeric_columns = [
                 c
                 for c in df.columns
-                if pd.api.types.is_numeric_dtype(df[c]) and not pd.api.types.is_bool_dtype(df[c])
+                if pd.api.types.is_numeric_dtype(df[c])
+                and not pd.api.types.is_bool_dtype(df[c])
+                and not pd.api.types.is_complex_dtype(df[c])
             ]
 
         self.feature_bounds = {}
@@ -208,13 +215,20 @@ class IsolationForestDetector:
 
         if columns is not None:
             self.numeric_columns = [
-                c for c in columns if c in df.columns and pd.api.types.is_numeric_dtype(df[c])
+                c
+                for c in columns
+                if c in df.columns
+                and pd.api.types.is_numeric_dtype(df[c])
+                and not pd.api.types.is_bool_dtype(df[c])
+                and not pd.api.types.is_complex_dtype(df[c])
             ]
         else:
             self.numeric_columns = [
                 c
                 for c in df.columns
-                if pd.api.types.is_numeric_dtype(df[c]) and not pd.api.types.is_bool_dtype(df[c])
+                if pd.api.types.is_numeric_dtype(df[c])
+                and not pd.api.types.is_bool_dtype(df[c])
+                and not pd.api.types.is_complex_dtype(df[c])
             ]
 
         # Filter out columns that have 0 non-null values to prevent SimpleImputer dropping features
