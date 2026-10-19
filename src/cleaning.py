@@ -16,7 +16,7 @@ import pandas as pd
 class DiffRecord:
     """Represents a discrete cell or row modification."""
 
-    row_id: int
+    row_id: Any
     column: str
     original_value: Any
     new_value: Any
@@ -105,8 +105,8 @@ class SafeCleaner:
     ) -> Tuple[pd.DataFrame, List[DiffRecord]]:
         """Preview duplicate row removal."""
         dup_mask = self._current_data.duplicated(subset=subset, keep=keep)
-        dropped_indices = list(self._current_data[dup_mask].index)
-        new_df = self._current_data.drop(index=dropped_indices).copy()
+        # Use boolean indexing to avoid deleting all copies when index has duplicate labels
+        new_df = self._current_data[~dup_mask].copy()
 
         diffs = [
             DiffRecord(
@@ -116,7 +116,7 @@ class SafeCleaner:
                 new_value="[ROW_DELETED]",
                 action_type="drop_duplicate",
             )
-            for idx in dropped_indices
+            for idx in self._current_data[dup_mask].index
         ]
         return new_df, diffs
 
@@ -154,6 +154,10 @@ class SafeCleaner:
         computed_fill = fill_value
         if computed_fill is None:
             non_null = series.dropna()
+            if len(non_null) == 0:
+                # Column is all-NaN; cannot compute statistical fill
+                return new_df, []
+
             if strategy == "median" and pd.api.types.is_numeric_dtype(series):
                 computed_fill = float(non_null.median())
             elif strategy == "mean" and pd.api.types.is_numeric_dtype(series):
@@ -164,13 +168,16 @@ class SafeCleaner:
             else:
                 computed_fill = 0 if pd.api.types.is_numeric_dtype(series) else "Unknown"
 
+        if computed_fill is None or (isinstance(computed_fill, (float, np.floating)) and np.isnan(computed_fill)):
+            return new_df, []
+
         new_df[column] = series.fillna(computed_fill)
 
         diffs = []
         for idx in self._current_data[missing_mask].index:
             diffs.append(
                 DiffRecord(
-                    row_id=int(idx),
+                    row_id=idx,
                     column=column,
                     original_value=None,
                     new_value=computed_fill,
@@ -209,10 +216,11 @@ class SafeCleaner:
             return self._current_data.copy(), []
 
         new_df = self._current_data.copy()
-        series = pd.to_numeric(new_df[column], errors="coerce")
+        raw_series = new_df[column]
+        num_series = pd.to_numeric(raw_series, errors="coerce")
         diffs = []
 
-        for idx, val in series.items():
+        for idx, val in num_series.items():
             if pd.isna(val):
                 continue
             new_val = val
@@ -222,18 +230,24 @@ class SafeCleaner:
                 new_val = upper
 
             if new_val != val:
+                orig_val = raw_series.loc[idx]
+                if isinstance(orig_val, pd.Series):
+                    orig_val = orig_val.iloc[0]
                 diffs.append(
                     DiffRecord(
-                        row_id=int(idx),
+                        row_id=idx,
                         column=column,
-                        original_value=val,
+                        original_value=orig_val,
                         new_value=new_val,
                         action_type="cap_outliers",
                     )
                 )
 
-        if lower is not None or upper is not None:
-            new_df[column] = series.clip(lower=lower, upper=upper)
+        if diffs:
+            if not pd.api.types.is_numeric_dtype(new_df[column]):
+                new_df[column] = new_df[column].astype(object)
+            for d in diffs:
+                new_df.loc[d.row_id, column] = d.new_value
 
         return new_df, diffs
 
@@ -268,30 +282,43 @@ class SafeCleaner:
 
         for idx, val in new_df[column].items():
             str_key = str(val).strip()
-            # Check exact match or trimmed/case-insensitive match
             replacement = None
+            found_key = False
             if val in mapping:
                 replacement = mapping[val]
+                found_key = True
             elif str_key in mapping:
                 replacement = mapping[str_key]
+                found_key = True
             else:
                 for k, v in mapping.items():
                     if str(k).lower().strip() == str_key.lower():
                         replacement = v
+                        found_key = True
                         break
 
-            if replacement is not None and replacement != val:
-                diffs.append(
-                    DiffRecord(
-                        row_id=int(idx),
-                        column=column,
-                        original_value=val,
-                        new_value=replacement,
-                        action_type="replace_value",
+            if found_key:
+                is_diff = False
+                if pd.isna(val) and not pd.isna(replacement):
+                    is_diff = True
+                elif not pd.isna(val) and pd.isna(replacement):
+                    is_diff = True
+                elif not pd.isna(val) and not pd.isna(replacement) and val != replacement:
+                    is_diff = True
+
+                if is_diff:
+                    diffs.append(
+                        DiffRecord(
+                            row_id=idx,
+                            column=column,
+                            original_value=val,
+                            new_value=replacement,
+                            action_type="replace_value",
+                        )
                     )
-                )
 
         if diffs:
+            new_df[column] = new_df[column].astype(object)
             for d in diffs:
                 new_df.loc[d.row_id, column] = d.new_value
 

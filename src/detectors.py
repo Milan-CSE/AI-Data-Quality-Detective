@@ -217,6 +217,9 @@ class IsolationForestDetector:
                 if pd.api.types.is_numeric_dtype(df[c]) and not pd.api.types.is_bool_dtype(df[c])
             ]
 
+        # Filter out columns that have 0 non-null values to prevent SimpleImputer dropping features
+        self.numeric_columns = [c for c in self.numeric_columns if df[c].notna().any()]
+
         if len(self.numeric_columns) == 0:
             return self
 
@@ -241,6 +244,10 @@ class IsolationForestDetector:
     def detect(self, df: pd.DataFrame) -> List[AnomalyFinding]:
         """Flag multivariate anomalies and explain feature-level attribution."""
         if self.model is None or df.empty or len(self.numeric_columns) == 0:
+            return []
+
+        # Ensure all fitted numeric columns exist in input df
+        if any(c not in df.columns for c in self.numeric_columns):
             return []
 
         X_raw = df[self.numeric_columns].values
@@ -289,10 +296,11 @@ class IsolationForestDetector:
             # Explain reason
             reason_parts = []
             for feat in top_features:
-                val = df.loc[row_id, feat]
+                val = df.iloc[i][feat] if i < len(df) else df.loc[row_id, feat]
                 med = self.medians.get(feat, 0.0)
+                val_str = f"{val:.2f}" if isinstance(val, (int, float, np.number)) and not pd.isna(val) else str(val)
                 reason_parts.append(
-                    f"{feat}={val} (diverges from median {med:.1f}, {contributions[feat]*100:.0f}% contribution)"
+                    f"{feat}={val_str} (diverges from median {med:.1f}, {contributions[feat]*100:.0f}% contribution)"
                 )
 
             reason_str = "Multivariate Anomaly: Isolated in joint feature space driven by " + " & ".join(

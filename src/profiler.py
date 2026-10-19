@@ -61,36 +61,49 @@ class DataProfiler:
                 f"Dataset contains {duplicate_count} duplicate rows ({duplicate_pct}% of total records)."
             )
 
-        for col in df.columns:
-            col_profile = self._profile_column(df[col], n_rows)
-            col_profiles[str(col)] = col_profile
+        col_names = [str(c) for c in df.columns]
+        has_dup_cols = len(col_names) != len(set(col_names))
+        if has_dup_cols:
+            dup_list = [c for c in set(col_names) if col_names.count(c) > 1]
+            warnings.append(
+                f"Dataset contains duplicate column names: {dup_list}. Column headers should be unique."
+            )
+
+        for col_idx in range(n_cols):
+            col_series = df.iloc[:, col_idx]
+            raw_col_name = str(df.columns[col_idx])
+            col_key = raw_col_name if not has_dup_cols or col_names.count(raw_col_name) == 1 else f"{raw_col_name}_{col_idx}"
+            col_profile = self._profile_column(col_series, n_rows)
+            col_profiles[col_key] = col_profile
 
             if col_profile["inferred_type"] == "numeric":
-                numeric_cols.append(col)
+                numeric_cols.append(col_idx)
 
             # Accumulate quality warnings
             if col_profile["missing_pct"] > 30.0:
                 warnings.append(
-                    f"Column '{col}' has high missingness: {col_profile['missing_pct']}% missing values."
+                    f"Column '{col_key}' has high missingness: {col_profile['missing_pct']}% missing values."
                 )
             elif col_profile["missing_pct"] > 0.0:
                 warnings.append(
-                    f"Column '{col}' has {col_profile['missing_count']} missing values ({col_profile['missing_pct']}%)."
+                    f"Column '{col_key}' has {col_profile['missing_count']} missing values ({col_profile['missing_pct']}%)."
                 )
 
             if col_profile.get("is_constant", False):
-                warnings.append(f"Column '{col}' is constant (has only 1 unique non-null value).")
+                warnings.append(f"Column '{col_key}' is constant (has only 1 unique non-null value).")
 
             if col_profile.get("high_cardinality_warning", False):
                 warnings.append(
-                    f"Column '{col}' has high cardinality ({col_profile['unique_count']} unique values), may be an ID or free text."
+                    f"Column '{col_key}' has high cardinality ({col_profile['unique_count']} unique values), may be an ID or free text."
                 )
 
         # Pairwise numeric correlations
         correlations = {}
         if len(numeric_cols) >= 2:
             try:
-                corr_df = df[numeric_cols].corr().round(3)
+                num_sub = df.iloc[:, numeric_cols].copy()
+                num_sub.columns = [str(df.columns[i]) if col_names.count(str(df.columns[i])) == 1 else f"{df.columns[i]}_{i}" for i in numeric_cols]
+                corr_df = num_sub.corr().round(3)
                 correlations = corr_df.to_dict()
             except Exception:
                 correlations = {}
@@ -167,37 +180,56 @@ class DataProfiler:
             empty_string_count = int((string_items.str.strip() == "").sum())
             profile["empty_string_count"] = empty_string_count
 
-        if is_numeric and len(non_null_series) > 0:
-            q25 = float(non_null_series.quantile(0.25))
-            q75 = float(non_null_series.quantile(0.75))
-            iqr = round(q75 - q25, 4)
-            min_val = float(non_null_series.min())
-            max_val = float(non_null_series.max())
-            mean_val = float(non_null_series.mean())
-            median_val = float(non_null_series.median())
-            std_val = float(non_null_series.std()) if len(non_null_series) > 1 else 0.0
-            skew_val = float(non_null_series.skew()) if len(non_null_series) > 2 else 0.0
+        if is_numeric:
+            if len(non_null_series) > 0:
+                q25 = float(non_null_series.quantile(0.25))
+                q75 = float(non_null_series.quantile(0.75))
+                iqr = round(q75 - q25, 4)
+                min_val = float(non_null_series.min())
+                max_val = float(non_null_series.max())
+                mean_val = float(non_null_series.mean())
+                median_val = float(non_null_series.median())
+                std_val = float(non_null_series.std()) if len(non_null_series) > 1 else 0.0
+                skew_val = float(non_null_series.skew()) if len(non_null_series) > 2 else 0.0
 
-            zeros_count = int((non_null_series == 0).sum())
-            neg_count = int((non_null_series < 0).sum())
+                zeros_count = int((non_null_series == 0).sum())
+                neg_count = int((non_null_series < 0).sum())
 
-            profile.update(
-                {
-                    "min": round(min_val, 4),
-                    "max": round(max_val, 4),
-                    "mean": round(mean_val, 4),
-                    "median": round(median_val, 4),
-                    "std": round(std_val, 4),
-                    "q25": round(q25, 4),
-                    "q75": round(q75, 4),
-                    "iqr": iqr,
-                    "skewness": round(skew_val, 4) if not np.isnan(skew_val) else 0.0,
-                    "zeros_count": zeros_count,
-                    "zeros_pct": round((zeros_count / total_rows) * 100, 2),
-                    "negative_count": neg_count,
-                    "negative_pct": round((neg_count / total_rows) * 100, 2),
-                }
-            )
+                profile.update(
+                    {
+                        "min": round(min_val, 4),
+                        "max": round(max_val, 4),
+                        "mean": round(mean_val, 4),
+                        "median": round(median_val, 4),
+                        "std": round(std_val, 4),
+                        "q25": round(q25, 4),
+                        "q75": round(q75, 4),
+                        "iqr": iqr,
+                        "skewness": round(skew_val, 4) if not np.isnan(skew_val) else 0.0,
+                        "zeros_count": zeros_count,
+                        "zeros_pct": round((zeros_count / total_rows) * 100, 2),
+                        "negative_count": neg_count,
+                        "negative_pct": round((neg_count / total_rows) * 100, 2),
+                    }
+                )
+            else:
+                profile.update(
+                    {
+                        "min": None,
+                        "max": None,
+                        "mean": None,
+                        "median": None,
+                        "std": None,
+                        "q25": None,
+                        "q75": None,
+                        "iqr": 0.0,
+                        "skewness": 0.0,
+                        "zeros_count": 0,
+                        "zeros_pct": 0.0,
+                        "negative_count": 0,
+                        "negative_pct": 0.0,
+                    }
+                )
         else:
             # Categorical frequency stats
             top_vals = non_null_series.value_counts().head(5)

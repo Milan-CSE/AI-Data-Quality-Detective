@@ -12,11 +12,19 @@ import numpy as np
 import pandas as pd
 
 
+def _safe_row_id(idx: Any) -> Any:
+    """Safely convert index to integer if possible, else keep original label."""
+    try:
+        return int(idx)
+    except (ValueError, TypeError):
+        return idx
+
+
 @dataclass
 class QualityFinding:
     """Represents a discrete data quality defect flagged by a rule."""
 
-    row_id: int
+    row_id: Any
     column: Optional[str]
     rule_name: str
     issue_type: str  # missing_value, duplicate_row, range_violation, invalid_category, pattern_mismatch, cross_field_violation
@@ -58,7 +66,7 @@ class NotNullRule(ValidationRule):
         for idx in df[is_na].index:
             findings.append(
                 QualityFinding(
-                    row_id=int(idx),
+                    row_id=_safe_row_id(idx),
                     column=self.column,
                     rule_name=self.name,
                     issue_type="missing_value",
@@ -109,7 +117,7 @@ class NumericRangeRule(ValidationRule):
             if violation:
                 findings.append(
                     QualityFinding(
-                        row_id=int(idx),
+                        row_id=_safe_row_id(idx),
                         column=self.column,
                         rule_name=self.name,
                         issue_type="range_violation",
@@ -154,7 +162,7 @@ class AllowedCategoriesRule(ValidationRule):
             if check_val not in self._allowed_normalized:
                 findings.append(
                     QualityFinding(
-                        row_id=int(idx),
+                        row_id=_safe_row_id(idx),
                         column=self.column,
                         rule_name=self.name,
                         issue_type="invalid_category",
@@ -188,7 +196,7 @@ class RegexPatternRule(ValidationRule):
             if not self.pattern.match(str_val):
                 findings.append(
                     QualityFinding(
-                        row_id=int(idx),
+                        row_id=_safe_row_id(idx),
                         column=self.column,
                         rule_name=self.name,
                         issue_type="pattern_mismatch",
@@ -219,7 +227,7 @@ class DuplicateRowRule(ValidationRule):
             col_spec = f"subset {self.subset}" if self.subset else "all columns"
             findings.append(
                 QualityFinding(
-                    row_id=int(idx),
+                    row_id=_safe_row_id(idx),
                     column=self.subset[0] if (self.subset and len(self.subset) == 1) else None,
                     rule_name=self.name,
                     issue_type="duplicate_row",
@@ -259,7 +267,7 @@ class CrossFieldRule(ValidationRule):
                 if not is_valid:
                     findings.append(
                         QualityFinding(
-                            row_id=int(idx),
+                            row_id=_safe_row_id(idx),
                             column=self.column,
                             rule_name=self.name,
                             issue_type="cross_field_violation",
@@ -320,6 +328,10 @@ class RuleEngine:
     def create_workforce_rules(cls) -> "RuleEngine":
         """Factory creating the default domain rules for workforce analytics."""
         engine = cls()
+
+        # 0. Missing value rules (Required fields)
+        for col in ["employee_id", "age", "years_experience", "department", "education", "job_level", "salary"]:
+            engine.add_rule(NotNullRule(column=col, severity="HIGH"))
 
         # 1. Range rules
         engine.add_rule(NumericRangeRule(column="age", min_val=18, max_val=100, severity="CRITICAL"))

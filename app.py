@@ -156,12 +156,17 @@ with st.sidebar:
     else:
         uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
         if uploaded_file is not None:
-            try:
-                uploaded_df = pd.read_csv(uploaded_file)
-                df_to_load = uploaded_df
-                st.session_state.dataset_name = uploaded_file.name
-            except Exception as e:
-                st.error(f"Error parsing CSV: {e}")
+            upload_key = f"uploaded_{uploaded_file.name}_{uploaded_file.size}"
+            if st.session_state.dataset_name != upload_key:
+                try:
+                    uploaded_df = pd.read_csv(uploaded_file)
+                    if uploaded_df.empty:
+                        st.warning("Uploaded CSV is empty (contains 0 records).")
+                    else:
+                        df_to_load = uploaded_df
+                        st.session_state.dataset_name = upload_key
+                except Exception as e:
+                    st.error(f"Error parsing CSV: {e}")
 
     if df_to_load is not None:
         st.session_state.active_df = df_to_load.copy(deep=True)
@@ -453,15 +458,17 @@ with tab_clean:
                 st.session_state.active_preview = (prev_df, diffs, "drop_duplicates", {})
 
         elif action == "Impute Missing Values":
-            num_cols = current_df.columns[current_df.isna().any()].tolist()
-            if not num_cols:
+            missing_cols = current_df.columns[current_df.isna().any()].tolist()
+            if not missing_cols:
                 st.success("No missing values found in current dataset!")
             else:
-                target_col = st.selectbox("Target Column:", num_cols)
-                strategy = st.selectbox("Strategy:", ["median", "mean", "mode", "constant"])
+                target_col = st.selectbox("Target Column:", missing_cols)
+                is_num = pd.api.types.is_numeric_dtype(current_df[target_col])
+                strategy_choices = ["median", "mean", "mode", "constant"] if is_num else ["mode", "constant"]
+                strategy = st.selectbox("Strategy:", strategy_choices)
                 custom_val = None
                 if strategy == "constant":
-                    custom_val = st.text_input("Constant Value:", value="0")
+                    custom_val = st.text_input("Constant Value:", value="0" if is_num else "Unknown")
 
                 preview_btn = st.button("Preview Imputation", key="prev_imp")
                 commit_btn = st.button("Apply & Commit Imputation", type="primary", key="app_imp")
@@ -489,19 +496,22 @@ with tab_clean:
             lower_bound = st.number_input("Lower Bound (Clamp)", value=float(default_lower))
             upper_bound = st.number_input("Upper Bound (Clamp)", value=float(default_upper))
 
-            preview_btn = st.button("Preview Capping", key="prev_cap")
-            commit_btn = st.button("Apply & Commit Capping", type="primary", key="app_cap")
+            if lower_bound > upper_bound:
+                st.error("Lower bound cannot be greater than upper bound.")
+            else:
+                preview_btn = st.button("Preview Capping", key="prev_cap")
+                commit_btn = st.button("Apply & Commit Capping", type="primary", key="app_cap")
 
-            if preview_btn or commit_btn:
-                prev_df, diffs = cleaner.preview_cap_outliers(
-                    column=target_col, lower=lower_bound, upper=upper_bound
-                )
-                st.session_state.active_preview = (
-                    prev_df,
-                    diffs,
-                    "cap",
-                    {"col": target_col, "lower": lower_bound, "upper": upper_bound},
-                )
+                if preview_btn or commit_btn:
+                    prev_df, diffs = cleaner.preview_cap_outliers(
+                        column=target_col, lower=lower_bound, upper=upper_bound
+                    )
+                    st.session_state.active_preview = (
+                        prev_df,
+                        diffs,
+                        "cap",
+                        {"col": target_col, "lower": lower_bound, "upper": upper_bound},
+                    )
 
         elif action == "Replace Invalid Categories / Fix Typos":
             cat_cols = [c for c in current_df.columns if not pd.api.types.is_numeric_dtype(current_df[c])]

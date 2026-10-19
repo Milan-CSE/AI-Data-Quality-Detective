@@ -2,7 +2,7 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: Pytest](https://img.shields.io/badge/tests-26%20passed-brightgreen.svg)](https://pytest.org/)
+[![Tests: Pytest](https://img.shields.io/badge/tests-50%20passed-brightgreen.svg)](https://pytest.org/)
 [![Streamlit App](https://img.shields.io/badge/Streamlit-1.28%2B-FF4B4B.svg)](https://streamlit.io/)
 
 > **A rigorous machine learning and statistical data quality platform.** Combines deterministic schema rules, univariate IQR baselines, and unsupervised Isolation Forest anomaly detection with empirical benchmarking against labeled ground-truth error injections.
@@ -92,14 +92,13 @@ Evaluated against a benchmark of **1,515 records** with **140 injected ground-tr
 
 | Detector | Target Scope | Flagged | TP | FP | FN | Precision | Recall | F1-Score | Detection Latency |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Validation Rules** | Schema & Rule Violations | 99 | 85 | 14 | 25 | **0.8586** | **0.7727** | **0.8134** | 321.3 ms |
-| **IQR Baseline** | Univariate Numerical Outliers | 61 | 30 | 31 | 0 | **0.4918** | **1.0000** | **0.6593** | 31.5 ms |
-| **Isolation Forest** | Univariate Numerical Outliers | 76 | 30 | 46 | 0 | **0.3947** | **1.0000** | **0.5660** | 924.4 ms |
-| **IQR Baseline** | Multivariate Outliers | 61 | 0 | 61 | 30 | **0.0000** | **0.0000** | **0.0000** | 31.5 ms |
-| **Isolation Forest** | Multivariate Outliers (c=0.10) | 152 | 22 | 130 | 8 | **0.1447** | **0.7333** | **0.2418** | 930.1 ms |
-| **Isolation Forest** | Multivariate Outliers (c=0.15) | 228 | 27 | 201 | 3 | **0.1184** | **0.9000** | **0.2093** | 945.2 ms |
-| **IQR Baseline** | All Numerical Outliers | 61 | 30 | 31 | 30 | **0.4918** | **0.5000** | **0.4959** | 31.5 ms |
-| **Isolation Forest** | All Numerical Outliers (c=0.05)| 76 | 36 | 40 | 24 | **0.4737** | **0.6000** | **0.5294** | 924.4 ms |
+| **Validation Rules** | Schema & Rule Violations | 124 | 124 | 0 | 0 | **1.0000** | **1.0000** | **1.0000** | 122.0 ms |
+| **IQR Baseline** | Univariate Numerical Outliers | 61 | 30 | 11 | 0 | **0.7317** | **1.0000** | **0.8451** | 9.8 ms |
+| **Isolation Forest** | Univariate Numerical Outliers | 76 | 30 | 27 | 0 | **0.5263** | **1.0000** | **0.6897** | 479.8 ms |
+| **IQR Baseline** | Multivariate Outliers | 61 | 0 | 11 | 30 | **0.0000** | **0.0000** | **0.0000** | 9.8 ms |
+| **Isolation Forest** | Multivariate Outliers | 76 | 6 | 27 | 24 | **0.1818** | **0.2000** | **0.1905** | 479.8 ms |
+| **IQR Baseline** | All Numerical Outliers | 61 | 50 | 11 | 30 | **0.8197** | **0.6250** | **0.7092** | 9.8 ms |
+| **Isolation Forest** | All Numerical Outliers (c=0.05)| 76 | 48 | 27 | 32 | **0.6400** | **0.6000** | **0.6194** | 479.8 ms |
 
 ### False Alarm Analysis on 100% Clean Data (1,500 records)
 To prove models are not merely over-flagging clean records:
@@ -167,7 +166,8 @@ ai-data-quality-detective/
     ├── test_rules.py           # Tests for schema & cross-field rules
     ├── test_detectors.py       # Tests for IQR & Isolation Forest
     ├── test_cleaning.py        # Tests for immutability, capping, & undo
-    └── test_evaluation.py      # Tests for error injection & metric equations
+    ├── test_evaluation.py      # Tests for error injection & metric equations
+    └── test_audit_cases.py     # 24 boundary, edge case, and immutability tests
 ```
 
 ---
@@ -197,7 +197,7 @@ pip install -r requirements.txt
 ```bash
 python -m pytest -v
 ```
-*(All 26 automated tests verify profiling edge cases, rule violations, detector bounds, immutability, and evaluation metric arithmetic).*
+*(All 50 automated tests verify profiling edge cases, rule violations, detector bounds, immutability, and evaluation metric arithmetic).*
 
 ### Run the Benchmark Runner
 ```bash

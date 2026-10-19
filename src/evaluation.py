@@ -68,6 +68,18 @@ class ErrorInjector:
         """Inject known anomalies into a pristine DataFrame and track ground truth."""
         df = clean_df.copy(deep=True).reset_index(drop=True)
         n_rows = len(df)
+        total_requested = (
+            univariate_count
+            + multivariate_count
+            + category_error_count
+            + range_violation_count
+            + missing_count
+            + duplicate_count
+        )
+        if n_rows < total_requested:
+            raise ValueError(
+                f"clean_df must contain at least {total_requested} rows to allocate distinct error injections (received {n_rows} rows)."
+            )
         all_indices = np.arange(n_rows)
         self.rng.shuffle(all_indices)
 
@@ -258,10 +270,20 @@ class EvaluationEngine:
         ground_truth_row_ids: Set[int],
         total_samples: int,
         runtime_ms: float,
+        other_anomaly_row_ids: Optional[Set[int]] = None,
     ) -> EvaluationMetrics:
         """Compute standard confusion matrix and ML evaluation metrics."""
         tp = len(flagged_row_ids.intersection(ground_truth_row_ids))
-        fp = len(flagged_row_ids - ground_truth_row_ids)
+
+        # When evaluating sub-scopes, exclude known true anomalies of other types
+        # from being counted as false positives (prevents evaluation bias).
+        candidate_fp = flagged_row_ids - ground_truth_row_ids
+        if other_anomaly_row_ids is not None:
+            fp_set = candidate_fp - other_anomaly_row_ids
+        else:
+            fp_set = candidate_fp
+
+        fp = len(fp_set)
         fn = len(ground_truth_row_ids - flagged_row_ids)
         tn = total_samples - (tp + fp + fn)
         tn = max(0, tn)
@@ -313,7 +335,11 @@ class EvaluationEngine:
         gt_multivariate: Set[int] = {
             e.row_id for e in injected_errors if e.error_type == "multivariate_outlier"
         }
-        gt_numerical_all: Set[int] = gt_univariate.union(gt_multivariate)
+        gt_numerical_all: Set[int] = {
+            e.row_id
+            for e in injected_errors
+            if e.error_type in {"univariate_outlier", "multivariate_outlier", "range_violation"}
+        }
         gt_rules: Set[int] = {
             e.row_id
             for e in injected_errors
@@ -324,6 +350,7 @@ class EvaluationEngine:
                 "duplicate_row",
                 "univariate_outlier",  # Univariate injections also violate hard max/min bounds
             }
+            or (e.error_type == "multivariate_outlier" and getattr(e, "column", "") == "years_experience")
         }
 
         # 1. Run IQR Baseline
@@ -364,6 +391,7 @@ class EvaluationEngine:
                 gt_univariate,
                 total_samples,
                 iqr_time,
+                other_anomaly_row_ids=gt_all - gt_univariate,
             )
         )
         metrics_list.append(
@@ -374,6 +402,7 @@ class EvaluationEngine:
                 gt_univariate,
                 total_samples,
                 iso_time,
+                other_anomaly_row_ids=gt_all - gt_univariate,
             )
         )
 
@@ -386,6 +415,7 @@ class EvaluationEngine:
                 gt_multivariate,
                 total_samples,
                 iqr_time,
+                other_anomaly_row_ids=gt_all - gt_multivariate,
             )
         )
         metrics_list.append(
@@ -396,10 +426,11 @@ class EvaluationEngine:
                 gt_multivariate,
                 total_samples,
                 iso_time,
+                other_anomaly_row_ids=gt_all - gt_multivariate,
             )
         )
 
-        # Scope: Combined Numerical (Univariate + Multivariate)
+        # Scope: Combined Numerical (Univariate + Multivariate + Numeric Range)
         metrics_list.append(
             cls.compute_metrics(
                 "IQR Baseline",
@@ -408,6 +439,7 @@ class EvaluationEngine:
                 gt_numerical_all,
                 total_samples,
                 iqr_time,
+                other_anomaly_row_ids=gt_all - gt_numerical_all,
             )
         )
         metrics_list.append(
@@ -418,6 +450,7 @@ class EvaluationEngine:
                 gt_numerical_all,
                 total_samples,
                 iso_time,
+                other_anomaly_row_ids=gt_all - gt_numerical_all,
             )
         )
 
@@ -430,6 +463,7 @@ class EvaluationEngine:
                 gt_rules,
                 total_samples,
                 rule_time,
+                other_anomaly_row_ids=gt_all - gt_rules,
             )
         )
 
@@ -481,11 +515,12 @@ class EvaluationEngine:
         if contaminations is None:
             contaminations = [0.01, 0.03, 0.05, 0.08, 0.10, 0.12, 0.15]
 
+        gt_all = {e.row_id for e in injected_errors}
         gt_multivariate = {e.row_id for e in injected_errors if e.error_type == "multivariate_outlier"}
         gt_numerical_all = {
             e.row_id
             for e in injected_errors
-            if e.error_type in {"univariate_outlier", "multivariate_outlier"}
+            if e.error_type in {"univariate_outlier", "multivariate_outlier", "range_violation"}
         }
 
         results = []
@@ -504,6 +539,7 @@ class EvaluationEngine:
                 gt_numerical_all,
                 len(df_corrupted),
                 duration,
+                other_anomaly_row_ids=gt_all - gt_numerical_all,
             )
             m_multi = cls.compute_metrics(
                 f"Isolation Forest (c={c})",
@@ -512,6 +548,7 @@ class EvaluationEngine:
                 gt_multivariate,
                 len(df_corrupted),
                 duration,
+                other_anomaly_row_ids=gt_all - gt_multivariate,
             )
 
             results.append(
