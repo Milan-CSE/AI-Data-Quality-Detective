@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pandas as pd
-from src.evaluation import ErrorInjector, EvaluationEngine
+from src.evaluation import DEFAULT_CONTAMINATIONS, ErrorInjector, EvaluationEngine
 
 
 def run_benchmark():
@@ -76,7 +76,7 @@ def run_benchmark():
     sensitivity_results = EvaluationEngine.run_contamination_sensitivity(
         df_corrupted=df_corrupted,
         injected_errors=injected_errors,
-        contaminations=[0.01, 0.03, 0.05, 0.07, 0.10, 0.12, 0.15],
+        contaminations=DEFAULT_CONTAMINATIONS,
         random_state=42,
     )
 
@@ -101,10 +101,11 @@ def generate_markdown_report(eval_results: dict, sensitivity_results: list) -> s
     md.append("## 1. Experimental Methodology & Ground Truth")
     md.append(f"- **Total Dataset Size**: {counts['total_samples']} records")
     md.append(f"- **Total Injected Anomalies**: {counts['ground_truth_total']} known errors")
-    md.append(f"  - Univariate Outliers (extreme numeric values): {counts['univariate_count']}")
+    md.append(f"  - Univariate Outliers (extreme numeric values & range violations): {counts['univariate_count']}")
     md.append(f"  - Multivariate Outliers (cross-feature abnormal combinations): {counts['multivariate_count']}")
     md.append(f"  - Rule Violations (categories, negative ages, missing values, duplicates): {counts['rule_violations_count']}")
     md.append("- **Evaluation Protocol**: Fixed random seed (`seed=42`), ground truth labels stored independently from detector inputs.")
+
     md.append("")
     md.append("## 2. Head-to-Head Performance Benchmark")
     md.append("")

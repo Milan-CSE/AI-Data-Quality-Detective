@@ -3,7 +3,7 @@
 ## 1. Experimental Methodology & Ground Truth
 - **Total Dataset Size**: 1515 records
 - **Total Injected Anomalies**: 140 known errors
-  - Univariate Outliers (extreme numeric values): 30
+  - Univariate Outliers (extreme numeric values & range violations): 50
   - Multivariate Outliers (cross-feature abnormal combinations): 30
   - Rule Violations (categories, negative ages, missing values, duplicates): 124
 - **Evaluation Protocol**: Fixed random seed (`seed=42`), ground truth labels stored independently from detector inputs.
@@ -12,13 +12,13 @@
 
 | Detector | Target Scope | Flagged | TP | FP | FN | Precision | Recall | F1-Score | Latency (ms) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **IQR Baseline** | Univariate Outliers | 61 | 30 | 11 | 0 | **0.7317** | **1.0000** | **0.8451** | 11.1 ms |
-| **Isolation Forest** | Univariate Outliers | 76 | 30 | 27 | 0 | **0.5263** | **1.0000** | **0.6897** | 367.3 ms |
-| **IQR Baseline** | Multivariate Outliers | 61 | 0 | 11 | 30 | **0.0000** | **0.0000** | **0.0000** | 11.1 ms |
-| **Isolation Forest** | Multivariate Outliers | 76 | 6 | 27 | 24 | **0.1818** | **0.2000** | **0.1905** | 367.3 ms |
-| **IQR Baseline** | All Numerical Outliers | 61 | 50 | 11 | 30 | **0.8197** | **0.6250** | **0.7092** | 11.1 ms |
-| **Isolation Forest** | All Numerical Outliers | 76 | 48 | 27 | 32 | **0.6400** | **0.6000** | **0.6194** | 367.3 ms |
-| **Validation Rules** | Schema & Rule Violations | 124 | 124 | 0 | 0 | **1.0000** | **1.0000** | **1.0000** | 77.2 ms |
+| **IQR Baseline** | Univariate Outliers | 61 | 50 | 11 | 0 | **0.8197** | **1.0000** | **0.9009** | 38.7 ms |
+| **Isolation Forest** | Univariate Outliers | 69 | 42 | 27 | 8 | **0.6087** | **0.8400** | **0.7059** | 1055.8 ms |
+| **IQR Baseline** | Multivariate Outliers | 11 | 0 | 11 | 30 | **0.0000** | **0.0000** | **0.0000** | 38.7 ms |
+| **Isolation Forest** | Multivariate Outliers | 33 | 6 | 27 | 24 | **0.1818** | **0.2000** | **0.1905** | 1055.8 ms |
+| **IQR Baseline** | All Numerical Outliers | 61 | 50 | 11 | 30 | **0.8197** | **0.6250** | **0.7092** | 38.7 ms |
+| **Isolation Forest** | All Numerical Outliers | 75 | 48 | 27 | 32 | **0.6400** | **0.6000** | **0.6194** | 1055.8 ms |
+| **Validation Rules** | Schema & Rule Violations | 124 | 124 | 0 | 0 | **1.0000** | **1.0000** | **1.0000** | 249.0 ms |
 
 ## 3. False Alarm Analysis on 100% Clean Data
 To ensure detectors are not merely aggressive flaggers, each model was evaluated on pristine, uncorrupted reference data:
